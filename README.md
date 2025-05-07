@@ -10,8 +10,9 @@ Key pipeline components are implemented:
   -Landmark Data Handling: Processes and stores landmark coordinates/visibility, maintaining recent frame history.
   -Gait Event Detection: Implements a heuristic method for heel strike and toe off based on vertical landmark movement.
   -#Gait Metric Calculation: Calculates preliminary metrics: 
-  ![{9F5E019F-7CA0-4E99-BC71-725816BCA130}](https://github.com/user-attachments/assets/63afd08e-cb67-4394-9835-b6129283bcc4)
+    ![{9F5E019F-7CA0-4E99-BC71-725816BCA130}](https://github.com/user-attachments/assets/63afd08e-cb67-4394-9835-b6129283bcc4)
   -#Stick Figure Visualization: Draws a stick figure on video frames based on detected landmarks(needs some calibration)
+    ![{243A9BF2-9F3E-4A05-A435-DD73D41D1C9C}](https://github.com/user-attachments/assets/fab0640a-d6b9-422b-9519-ddb9692e2aed)
     Google Drive link of the current work: https://drive.google.com/file/d/1WYXPqofN0uQz3OQkdUiWqmcUVLKCeK0c/view?usp=sharing
   -Output Generation: Prints metrics to console, saves stick figure video overlay.
 
