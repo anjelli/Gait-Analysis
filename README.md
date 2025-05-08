@@ -1,4 +1,4 @@
-# University-of-Miami---Gait-Analysis
+# University of Miami - Gait-Analysis
 
 # Project Overview
 This project develops a gait analysis pipeline using MediaPipe Pose. It processes video to extract gait parameters and visualize pose. The pipeline detects landmarks, identifies gait events (heel strike, toe off), calculates metrics, and overlays a stick figure on the video.
