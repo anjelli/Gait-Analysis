@@ -17,14 +17,9 @@ Key pipeline components are implemented:
     Google Drive link of the current work: https://drive.google.com/file/d/1WYXPqofN0uQz3OQkdUiWqmcUVLKCeK0c/view?usp=sharing
   -Output Generation: Prints metrics to console, saves stick figure video overlay.
 
-# Challenges addressed:
-
-  -Output Video Download: Fixed download issues ("Failed to Fetch") by adding cv2.VideoWriter error handling and using google.colab.files.download().
-  -Initial Pose Estimation Accuracy: Improved early frame tracking by increasing model_complexity to 2.
-
-# Current Issues and Future Work:
-
-  -Spatial Metric Calibration: Requires accurate real-world measurement for step/stride length. Current code uses a placeholder; robust calibration is needed.
-  -Robust Gait Event Detection: Simple thresholds may lack robustness. Advanced techniques (velocity, angles, ML) could improve accuracy.
-  -Handling Occlusions and Multiple People: Pipeline assumes single, visible person; does not handle occlusions or multiple subjects.
-  
+# Limitation of the current model:
+  - Pose detection isn't robust
+  - All distances are pixel-based(not in m or cm) - therefore the stride length and speed are        relative : probably need a reference object of know size(for pixel to meter conversion)
+  - # Assumption made: heel strike = when heel is lower than toe:
+    This wouldn't be true for irregular gait(limping/elderly)
+    
