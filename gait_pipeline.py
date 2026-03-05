@@ -1,6 +1,4 @@
 import argparse
-import importlib
-import importlib.util
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -63,26 +61,10 @@ def _adaptive_savgol(x: np.ndarray, default_window: int, poly: int) -> np.ndarra
     return savgol_filter(x, window_length=w, polyorder=poly)
 
 
-def _create_pose_estimator(model_complexity: int = 2):
-    """Create a MediaPipe Pose estimator across package layout variants."""
-    if hasattr(mp, "solutions") and hasattr(mp.solutions, "pose"):
-        return mp.solutions.pose.Pose(model_complexity=model_complexity)
-
-    pose_spec = importlib.util.find_spec("mediapipe.python.solutions.pose")
-    if pose_spec is not None:
-        mp_pose = importlib.import_module("mediapipe.python.solutions.pose")
-        return mp_pose.Pose(model_complexity=model_complexity)
-
-    raise RuntimeError(
-        "MediaPipe Pose API not found in this mediapipe build. "
-        "Please install a full mediapipe wheel (e.g., `python -m pip install mediapipe`)."
-    )
-
-
 def extract_landmarks(video_path: str) -> Tuple[pd.DataFrame, float]:
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
-    pose = _create_pose_estimator(model_complexity=2)
+    pose = mp.solutions.pose.Pose(model_complexity=2)
 
     rows: List[Dict[str, float]] = []
     frame = 0
