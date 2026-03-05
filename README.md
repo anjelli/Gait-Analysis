@@ -1,25 +1,51 @@
-# University of Miami - Gait-Analysis
+# University of Miami - Gait Analysis
 
-# Project Overview
-This project develops a gait analysis pipeline using MediaPipe Pose. It processes video to extract gait parameters and visualize pose. The pipeline detects landmarks, identifies gait events (heel strike, toe off), calculates metrics, and overlays a stick figure on the video.
+This repository now includes an improved gait-analysis pipeline tailored to sagittal walking videos and the Zeni-style event definitions discussed with your collaborators.
 
-# Work Accomplished
-Key pipeline components are implemented:
-  
-  -MediaPipe Pose Estimation: Uses MediaPipe Pose (model_complexity=2) for accurate 33-landmark detection per frame.
-  -Landmark Data Handling: Processes and stores landmark coordinates/visibility, maintaining recent frame history.
-  -Gait Event Detection: Implements a heuristic method for heel strike and toe off based on vertical landmark movement.
-  - # Gait Metric Calculation: Calculates preliminary metrics: 
-    ![{9F5E019F-7CA0-4E99-BC71-725816BCA130}](https://github.com/user-attachments/assets/63afd08e-cb67-4394-9835-b6129283bcc4)
-  - # Stick Figure Visualization: Draws a stick figure on video frames based on detected landmarks(needs some calibration)
-    ![{243A9BF2-9F3E-4A05-A435-DD73D41D1C9C}](https://github.com/user-attachments/assets/fab0640a-d6b9-422b-9519-ddb9692e2aed)
-    
-    Google Drive link of the current work: https://drive.google.com/file/d/1WYXPqofN0uQz3OQkdUiWqmcUVLKCeK0c/view?usp=sharing
-  -Output Generation: Prints metrics to console, saves stick figure video overlay.
+## What was improved
 
-# Limitation of the current model:
-  - Pose detection isn't robust
-  - All distances are pixel-based(not in m or cm) - therefore the stride length and speed are        relative : probably need a reference object of know size(for pixel to meter conversion)
-  - Assumption made: heel strike = when heel is lower than toe:
-    This wouldn't be true for irregular gait(limping/elderly)
-    
+- **Event detection now uses relative coordinates** (heel-hip and toe-hip) instead of raw heel trajectories.
+  - Heel strike: peak in `heel_x - hip_x`.
+  - Toe off: valley in `toe_x - hip_x`.
+- **Walking-direction normalization** is automatic using hip velocity, so RL/LR videos use the same event logic.
+- **Robust peak filtering** uses minimum stride distance and prominence to reduce false peaks.
+- **Stride-consistent HS/TO pairing** only keeps toe-off events between consecutive heel strikes.
+- **Metric output format** includes frame-wise HS/TO flags plus summary metrics written to CSV.
+
+## Main script
+
+- `gait_pipeline.py`
+
+## Usage
+
+```bash
+python gait_pipeline.py "brandon_01_RL (1).MOV" --label brandon_01_RL --out brandon_01_metrics.csv
+python gait_pipeline.py "brandon_02_LR (1).MOV" --label brandon_02_LR --out brandon_02_metrics.csv
+```
+
+## Run without Jupyter Notebook
+
+Use the plain Python script (no notebook required):
+
+```bash
+python Gait_Analysis.py "brandon_01_RL (1).MOV"
+python Gait_Analysis.py "brandon_01_RL (1).MOV" "brandon_02_LR (1).MOV"
+```
+
+You can also set labels and output directory explicitly:
+
+```bash
+python Gait_Analysis.py "brandon_01_RL (1).MOV" "brandon_02_LR (1).MOV" --labels brandon_01_RL brandon_02_LR --out-dir outputs
+```
+
+## Output CSV columns
+
+- `frame`
+- `HS_left`, `HS_right`, `TO_left`, `TO_right`
+- `speed`, `cadence`, `cycle_time`, `stride_length`, `step_length`, `stance_time`, `swing_time`, `double_support_time`
+
+## Notes on reliability
+
+- Cadence and cycle time are usually the most reliable.
+- Stance/swing are estimable from HS/TO pairs, but sensitive to landmark noise.
+- Double support from monocular sagittal video is inherently lower-confidence.
