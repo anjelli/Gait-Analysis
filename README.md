@@ -23,21 +23,6 @@ python gait_pipeline.py "brandon_01_RL (1).MOV" --label brandon_01_RL --out bran
 python gait_pipeline.py "brandon_02_LR (1).MOV" --label brandon_02_LR --out brandon_02_metrics.csv
 ```
 
-## Run without Jupyter Notebook
-
-Use the plain Python script (no notebook required):
-
-```bash
-python Gait_Analysis.py "brandon_01_RL (1).MOV"
-python Gait_Analysis.py "brandon_01_RL (1).MOV" "brandon_02_LR (1).MOV"
-```
-
-You can also set labels and output directory explicitly:
-
-```bash
-python Gait_Analysis.py "brandon_01_RL (1).MOV" "brandon_02_LR (1).MOV" --labels brandon_01_RL brandon_02_LR --out-dir outputs
-```
-
 ## Output CSV columns
 
 - `frame`
