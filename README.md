@@ -19,6 +19,170 @@ The project was designed to investigate whether **low-cost RGB video and compute
 The implementation combines **MediaPipe Pose**, OpenCV-based geometric processing, Savitzky–Golay temporal filtering, peak/zero-crossing event detection, and rule-based stride consistency checks.
 
 ---
+Research Pipeline
+
+Video → Pose Estimation → Landmark Quality Control → Temporal Smoothing → Hip-Relative Coordinates → Walking-Direction Normalization → Heel-Strike / Toe-Off Detection → Stride Validation → Gait Metrics → CSV / JSON Evaluation
+
+What This Implementation Does
+
+The pipeline tracks nine lower-extremity / pelvic reference points:
+
+Pelvis midpoint
+
+Left knee
+
+Right knee
+
+Left ankle
+
+Right ankle
+
+Left heel
+
+Right heel
+
+Left toe
+
+Right toe
+
+Pose coordinates are extracted from MediaPipe Pose and stored in pixel coordinates together with landmark visibility scores.
+
+The event detector uses heel-to-pelvis and toe-to-pelvis relative trajectories. Hip-centered signals reduce sensitivity to the subject's global translation, while the estimated sign of pelvic velocity normalizes left-to-right and right-to-left recordings to a common direction convention.
+
+Temporal trajectories are smoothed using a Savitzky–Golay filter. Candidate heel strikes are detected from peaks in the relative heel signal; toe-offs are detected from valleys in the relative toe signal. Minimum event-spacing, prominence, and cycle-position constraints suppress implausible detections.
+
+Installation
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+
+Analyze a Video
+
+gait-analyze "brandon_01_RL (1).MOV" --out-dir results/
+
+With an explicit spatial scale:
+
+gait-analyze "brandon_01_RL (1).MOV" \
+    --meters-per-pixel 0.0021 \
+    --out-dir results/
+
+Process multiple recordings:
+
+gait-analyze \
+    "brandon_01_RL (1).MOV" \
+    "brandon_02_LR (1).MOV" \
+    --out-dir results/
+
+Outputs
+
+For each video, the pipeline writes:
+
+*_tracks.csv
+Frame-level landmark coordinates, visibility values, smoothed trajectories, and hip-relative signals.
+
+*_events.csv
+Frame-level heel-strike and toe-off indicators.
+
+*_cycles.csv
+Validated gait cycles with heel-strike, toe-off, cycle-time, stance-time, swing-time, and toe-off phase fraction.
+
+*_summary.json
+Video metadata, processing direction, spatial scale, and final gait metrics.
+
+Gait Metrics
+
+The pipeline estimates:
+
+Cadence
+
+Gait-cycle time
+
+Stride length
+
+Step length
+
+Walking speed
+
+Stance time
+
+Swing time
+
+Double-support time
+
+Timing metrics are derived from detected gait-event timestamps. Spatial quantities require a metric calibration or an explicit meters-per-pixel scale.
+
+Calibration
+
+For planar calibration, use a checkerboard with a known square size and estimate a robust homography with OpenCV RANSAC.
+
+The homography maps pixel coordinates to the calibrated reference plane:
+
+world_point = H × pixel_point
+
+The implementation reports the inlier set and reprojection RMSE so calibration quality can be inspected rather than silently assumed.
+
+Evaluation
+
+Ground-truth comparison is performed with:
+
+absolute error = |estimated − ground truth|
+
+percentage error = 100 × |estimated − ground truth| / |ground truth|
+
+The code deliberately avoids reporting unverified accuracy numbers. A research result should include the dataset, reference system, sample size, event-matching tolerance, and evaluation protocol.
+
+Research Design Notes
+
+The implementation follows common markerless gait-analysis design principles: event detection from foot trajectory extrema, explicit temporal filtering, direction normalization, and quantitative comparison against reference measurements.
+
+Heel-strike-only metrics such as stride time and cadence are expected to be more robust than quantities that depend on both heel strike and toe-off. Double-support and swing-time estimates should therefore be interpreted with additional caution.
+
+Repository Layout
+
+Gait-Analysis-Research-Grade/
+├── src/
+│   └── gait_analysis/
+│       ├── calibration.py
+│       ├── cli.py
+│       ├── config.py
+│       ├── events.py
+│       ├── evaluate.py
+│       ├── metrics.py
+│       ├── pipeline.py
+│       ├── pose.py
+│       └── signal.py
+├── tests/
+├── pyproject.toml
+├── requirements.txt
+└── README.md
+
+Validation and Reproducibility
+
+Before reporting a numerical result, record:
+
+Video frame rate and resolution
+
+Camera placement and walking direction
+
+Pose-estimation model/version
+
+Filtering parameters
+
+Event-detection thresholds
+
+Calibration method and reprojection error
+
+Number of valid gait cycles
+
+Ground-truth system and event-matching tolerance
+
+This makes the analysis auditable and repeatable.
+
+Scope
+
+This repository is intended for research and educational use. Monocular video does not directly provide full 3-D biomechanics, and the pipeline is not a clinically validated diagnostic device.
+---
 
 # Research Motivation
 
