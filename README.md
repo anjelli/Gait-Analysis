@@ -1,9 +1,12 @@
+Copy-paste this directly into your GitHub `README.md`:
+
+````markdown
 # Biomechanical Gait Analysis Modeling
 
 ### Monocular Computer Vision Pipeline for Quantitative Gait Analysis
 
-**Research Intern | Self-Directed Research Project**
-**February 2025 – April 2025**
+**Research Intern | Self-Directed Research Project**  
+**February 2025 – April 2025**  
 **Supervisor:** Professor Moataz Eltoukhy, University of Miami
 
 [![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)](https://www.python.org/) [![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-red?logo=opencv)](https://opencv.org/) [![MediaPipe](https://img.shields.io/badge/MediaPipe-Pose-orange)](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker) [![SciPy](https://img.shields.io/badge/SciPy-Signal%20Processing-8CAAE6?logo=scipy)](https://scipy.org/) [![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas)](https://pandas.pydata.org/)
@@ -14,49 +17,35 @@
 
 This repository implements a **monocular video-based gait analysis pipeline** for extracting biomechanically meaningful gait events and spatiotemporal parameters from sagittal-plane walking videos.
 
-The system converts raw video into structured gait measurements through a sequence of:
+The system converts raw video into structured gait measurements through the following pipeline:
 
-$$
-\boxed{
-\text{Video}
-\rightarrow
-\text{Pose Landmarks}
-\rightarrow
-\text{Coordinate Processing}
-\rightarrow
-\text{Temporal Filtering}
-\rightarrow
-\text{Gait Event Detection}
-\rightarrow
-\text{Spatiotemporal Metrics}
-}
-$$
+**Video → Pose Landmarks → Coordinate Processing → Temporal Filtering → Gait Event Detection → Spatiotemporal Metrics**
 
 The project was designed to investigate whether **low-cost RGB video and computer vision** can provide a practical alternative for preliminary gait assessment when laboratory-grade motion-capture infrastructure is unavailable.
 
-The implementation combines **MediaPipe Pose**, OpenCV-based geometric processing, Savitzky–Golay temporal filtering, peak/zero-crossing event detection, and rule-based stride consistency checks.
+The implementation combines **MediaPipe Pose**, OpenCV-based geometric processing, Savitzky–Golay temporal filtering, peak-based event detection, and stride-consistency constraints.
 
 ---
 
 # Research Motivation
 
-Traditional biomechanical gait laboratories commonly rely on marker-based motion capture and other specialized instrumentation. These systems offer high measurement fidelity but can be expensive, infrastructure-heavy, and difficult to deploy at scale.
+Traditional biomechanical gait laboratories commonly rely on marker-based motion capture and other specialized instrumentation. These systems provide high measurement fidelity but can be expensive, infrastructure-heavy, and difficult to deploy at scale.
 
 This project explores a simpler acquisition model:
 
 > **Can a conventional single-camera walking video be transformed into stable, interpretable gait measurements through geometric calibration and signal processing?**
 
-The pipeline focuses on recovering robust estimates of:
+The pipeline focuses on recovering estimates of:
 
-* Heel-strike and toe-off events
-* Cadence
-* Gait-cycle time
-* Stride length
-* Step length
-* Walking speed
-* Stance time
-* Swing time
-* Double-support time
+- Heel-strike and toe-off events
+- Cadence
+- Gait-cycle time
+- Stride length
+- Step length
+- Walking speed
+- Stance time
+- Swing time
+- Double-support time
 
 ---
 
@@ -82,7 +71,7 @@ The pipeline focuses on recovering robust estimates of:
                                 ▼
                   ┌────────────────────────────┐
                   │ Anatomical Landmark Series │
-                  │    x(t), y(t), frame      │
+                  │      x(t), y(t), frame     │
                   └─────────────┬──────────────┘
                                 │
                  ┌──────────────┴──────────────┐
@@ -90,15 +79,15 @@ The pipeline focuses on recovering robust estimates of:
                  ▼                             ▼
       ┌──────────────────────┐      ┌──────────────────────┐
       │ Geometric Calibration│      │ Relative Coordinates │
-      │  Checkerboard /      │      │ heel - hip / toe -   │
-      │  Homography          │      │ hip normalization    │
+      │ Checkerboard /        │      │ Heel-to-Hip /        │
+      │ Homography            │      │ Toe-to-Hip           │
       └──────────┬───────────┘      └──────────┬───────────┘
                  │                             │
                  └──────────────┬──────────────┘
                                 ▼
                      ┌─────────────────────┐
-                     │ Savitzky–Golay     │
-                     │ Temporal Smoothing │
+                     │ Savitzky–Golay      │
+                     │ Temporal Smoothing  │
                      └──────────┬──────────┘
                                 │
                                 ▼
@@ -123,7 +112,7 @@ The pipeline focuses on recovering robust estimates of:
                      ┌─────────────────────┐
                      │ CSV + Evaluation    │
                      └─────────────────────┘
-```
+````
 
 ---
 
@@ -140,25 +129,15 @@ The current gait-event implementation extracts the bilateral:
 * Left toe
 * Right toe
 
-MediaPipe landmark indices are explicitly defined in the processing pipeline, with hip, heel, and toe positions converted from normalized coordinates to pixel coordinates using the frame dimensions.
+The detected landmarks are converted from MediaPipe's normalized image coordinates into pixel coordinates using the frame dimensions.
 
-For landmark \(i\) at frame \(t\):
+For a landmark at frame `t`, its position is represented as:
 
-$$
-\mathbf{p}_i(t)=
-\begin{bmatrix}
-x_i(t)\\
-y_i(t)
-\end{bmatrix}
-$$
+**(x(t), y(t))**
 
-where \(x_i\) and \(y_i\) represent the image-space coordinates.
+For `N` tracked landmarks over `T` frames, the resulting trajectory data forms a `T × 2N` coordinate matrix.
 
-For \(N\) observed landmarks over \(T\) frames, the raw trajectory data can be represented as:
-
-$$
-\mathbf{X}\in\mathbb{R}^{T\times2N}
-$$
+This representation provides the temporal foundation for downstream gait-event detection and biomechanical feature extraction.
 
 ---
 
@@ -168,30 +147,16 @@ The notebook implementation includes a **checkerboard-based planar calibration s
 
 A checkerboard with known square dimensions is detected using OpenCV's chessboard-corner detection. Corresponding image coordinates and world-plane coordinates are then used to estimate a homography using **RANSAC**.
 
-The projective transformation is:
+The transformation can be understood as:
 
-$$
-s
-\begin{bmatrix}
-x_w\\
-y_w\\
-1
-\end{bmatrix}
-=
-H
-\begin{bmatrix}
-x_p\\
-y_p\\
-1
-\end{bmatrix}
-$$
+**[x_world, y_world, 1] = H × [x_pixel, y_pixel, 1]**
 
 where:
 
-* \(H\) = \(3\times3\) homography matrix
-* \((x_p,y_p)\) = pixel coordinates
-* \((x_w,y_w)\) = coordinates on the calibrated reference plane
-* \(s\) = projective scale
+* `H` is the `3 × 3` homography matrix
+* `(x_pixel, y_pixel)` are image coordinates
+* `(x_world, y_world)` are coordinates on the calibrated reference plane
+* the homogeneous coordinate accounts for projective scaling
 
 The calibrated coordinates are then converted from centimeters to meters.
 
@@ -216,57 +181,42 @@ RANSAC Homography Estimation
 Pixel → Ground-Plane Coordinates
 ```
 
-The notebook explicitly uses an **8.5 cm checkerboard square size** and supports multiple checkerboard patterns for detection robustness.
+The notebook uses an **8.5 cm checkerboard square size** and supports multiple checkerboard patterns for calibration robustness.
 
 ---
 
 # 3. Relative Coordinate Normalization
 
-The CLI pipeline introduces a more robust event-detection representation by using coordinates relative to the subject's hip rather than directly analyzing raw heel trajectories.
+The gait-event pipeline uses coordinates relative to the subject's hip rather than directly analyzing absolute foot coordinates.
 
-The midpoint of the hips is computed as:
+The hip midpoint is calculated as:
 
-$$
-x_{hip}(t)
-=
-\frac{x_{Lhip}(t)+x_{Rhip}(t)}{2}
-$$
+**x_hip(t) = (x_left_hip(t) + x_right_hip(t)) / 2**
 
-After smoothing, the system estimates walking direction from the median hip velocity:
+Hip velocity is then estimated from the temporal derivative of the hip trajectory:
 
-$$
-v_{hip}(t)=
-\frac{d x_{hip}(t)}{dt}
-$$
+**v_hip(t) = d(x_hip(t)) / dt**
 
-The sign of the median velocity determines the walking-direction normalization.
+The median hip velocity is used to determine walking direction.
 
-For each side:
+For each side, the heel and toe signals are expressed relative to the hip:
 
-$$
-r_{heel}(t)
-=
-d\left(x_{heel}(t)-x_{hip}(t)\right)
-$$
+**r_heel(t) = d × (x_heel(t) − x_hip(t))**
 
-$$
-r_{toe}(t)
-=
-d\left(x_{toe}(t)-x_{hip}(t)\right)
-$$
+**r_toe(t) = d × (x_toe(t) − x_hip(t))**
 
-where \(d\in\{-1,+1\}\) normalizes right-to-left and left-to-right recordings into the same coordinate convention.
+where `d` is either `+1` or `−1` and normalizes both right-to-left and left-to-right recordings into the same direction convention.
 
 ### Why Relative Coordinates?
 
 Raw trajectories are sensitive to:
 
-* camera position
-* walking direction
-* subject location in the frame
-* global body translation
+* Camera position
+* Walking direction
+* Subject location in the frame
+* Global body translation
 
-Using hip-relative signals suppresses much of the global translation and makes gait-event detection more invariant to whether the subject walks **left-to-right or right-to-left**.
+Using hip-relative signals suppresses much of the global translation and makes gait-event detection more consistent across walking directions.
 
 ---
 
@@ -274,53 +224,44 @@ Using hip-relative signals suppresses much of the global translation and makes g
 
 Raw pose trajectories contain high-frequency fluctuations caused by landmark-estimation uncertainty.
 
-The pipeline applies an **adaptive Savitzky–Golay filter** to the landmark signals.
+The pipeline applies a **Savitzky–Golay filter** to smooth the trajectory signals while preserving their overall temporal shape.
 
-The current configuration uses:
+Current configuration:
 
 ```text
 Window length : 11 samples
 Polynomial     : 3rd order
 ```
 
-The filter locally approximates the trajectory using a polynomial while preserving the overall shape of the gait signal more effectively than simple moving-average smoothing.
-
 Conceptually:
 
-$$
-x_{smooth}(t)=
-\mathcal{SG}\left(x(t)\right)
-$$
+**x_smooth(t) = SavitzkyGolay(x(t))**
 
-where \(\mathcal{SG}\) represents Savitzky–Golay filtering.
+The purpose of this step is to reduce frame-to-frame landmark jitter before numerical differentiation and gait-event detection.
 
-This produces smoother trajectories before numerical differentiation and event detection.
+This is particularly important because noisy trajectories can generate false peaks and, consequently, incorrect gait events.
 
 ---
 
 # 5. Gait Event Detection
 
-The pipeline identifies two fundamental gait events:
+The pipeline identifies two primary gait events:
 
 ### Heel Strike (HS)
 
-Heel-strike candidates are detected from peaks in the heel-to-hip relative trajectory.
+Heel-strike candidates are identified from peaks in the heel-to-hip relative trajectory.
 
-$$
-HS = \operatorname{peaks}(r_{heel})
-$$
+**HS = peaks(r_heel)**
 
 ### Toe Off (TO)
 
-Toe-off candidates are detected from valleys in the toe-to-hip relative trajectory:
+Toe-off candidates are identified from valleys in the toe-to-hip relative trajectory.
 
-$$
-TO = \operatorname{peaks}(-r_{toe})
-$$
+**TO = peaks(−r_toe)**
 
-The implementation uses `scipy.signal.find_peaks()` with constraints on peak prominence and temporal separation to suppress spurious detections.
+The implementation uses `scipy.signal.find_peaks()` together with minimum temporal spacing and peak-prominence constraints to suppress spurious detections.
 
-Current detection parameters include:
+Current detection parameters:
 
 ```text
 Minimum stride interval : 0.7 s
@@ -332,32 +273,28 @@ Peak prominence         : 6 px
 
 # 6. Stride-Consistent Event Pairing
 
-A major source of error in gait analysis is false event detection caused by landmark jitter or small oscillations.
+A major source of error in monocular gait analysis is false event detection caused by landmark jitter and small oscillations.
 
-The system therefore imposes **temporal and spatial constraints** on detected gait events.
+The pipeline therefore applies **temporal and spatial consistency checks** to candidate gait events.
 
-For candidate heel strikes \(HS_i\) and \(HS_{i+1}\), events are retained only when they satisfy the expected stride spacing.
+For consecutive heel strikes, the system checks whether the detected events satisfy expected stride spacing.
 
-The extended notebook implementation further applies stride locking based on:
+The extended notebook implementation also applies stride-locking constraints based on:
 
-$$
-\Delta t \geq t_{min}
-$$
+**Δt ≥ minimum stride interval**
 
 and
 
-$$
-\Delta x \geq \alpha\tilde{S}
-$$
+**Δx ≥ minimum stride-distance fraction**
 
 where:
 
-* \(\Delta t\) = elapsed time between candidate heel strikes
-* \(\Delta x\) = spatial separation
-* \(\tilde{S}\) = median stride distance
-* \(\alpha\) = minimum acceptable stride fraction
+* `Δt` is the time between candidate heel strikes
+* `Δx` is the spatial separation between events
+* the reference stride distance is estimated from valid gait cycles
+* the minimum stride fraction controls spatial consistency
 
-The corresponding toe-off is then selected from the valid event interval between consecutive heel strikes.
+Toe-off events are then selected from the valid interval between consecutive heel strikes.
 
 This prevents isolated false peaks from propagating into the final gait metrics.
 
@@ -371,13 +308,9 @@ Once gait events are detected, the pipeline derives higher-level gait parameters
 
 For consecutive heel strikes of the same foot:
 
-$$
-T_{cycle}
-=
-t_{HS,i+1}-t_{HS,i}
-$$
+**Gait cycle time = t_HS(next) − t_HS(current)**
 
-The implementation uses the mean of successive left-foot heel-strike intervals.
+The implementation uses the mean interval between successive heel strikes.
 
 ---
 
@@ -385,21 +318,11 @@ The implementation uses the mean of successive left-foot heel-strike intervals.
 
 For consecutive heel strikes:
 
-$$
-L_{stride}
-=
-|x_{HS,i+1}-x_{HS,i}|
-$$
+**Stride length = |x_HS(next) − x_HS(current)|**
 
 After spatial scaling:
 
-$$
-L_{stride}^{m}
-=
-L_{stride}^{px}\cdot s
-$$
-
-where \(s\) is the estimated meters-per-pixel scale.
+**Stride length (m) = Stride length (px) × meters-per-pixel scale**
 
 ---
 
@@ -407,90 +330,61 @@ where \(s\) is the estimated meters-per-pixel scale.
 
 Walking speed is estimated from stride displacement divided by stride duration:
 
-$$
-v
-=
-\frac{L_{stride}}{T_{cycle}}
-$$
+**Walking speed = Stride length / Gait cycle time**
 
-The implementation averages stride-level speed estimates across valid cycles.
+The implementation averages stride-level speed estimates across valid gait cycles.
 
 ---
 
 ## Step Length
 
-The current implementation approximates step length as half of mean stride length:
+The current implementation approximates step length as:
 
-$$
-L_{step}
-=
-\frac{L_{stride}}{2}
-$$
+**Step length = Stride length / 2**
 
 ---
 
 ## Cadence
 
-Heel strikes from both feet are merged into a chronologically ordered sequence:
+Heel strikes from both feet are merged into chronological order.
 
-$$
-t_1,t_2,\ldots,t_n
-$$
+For consecutive events:
 
-with step intervals:
+**Step interval = t(next) − t(current)**
 
-$$
-\Delta t_i=t_{i+1}-t_i
-$$
+Cadence is estimated as:
 
-Cadence is then estimated as:
+**Cadence = 60 / mean(step interval)**
 
-$$
-C=
-\frac{60}{\operatorname{mean}(\Delta t)}
-$$
-
-in steps/minute.
+with the result expressed in **steps per minute**.
 
 ---
 
 # 8. Stance and Swing Phase Estimation
 
-The pipeline defines:
+The pipeline estimates stance and swing durations from detected heel-strike and toe-off events.
 
 ### Stance
 
-$$
-T_{stance}
-=
-t_{TO}-t_{HS}
-$$
+**Stance time = Toe-off time − Heel-strike time**
 
 ### Swing
 
-$$
-T_{swing}
-=
-t_{HS,next}-t_{TO}
-$$
+**Swing time = Next heel-strike time − Toe-off time**
 
-These are computed separately for left and right sides and then aggregated across valid gait cycles.
+These values are computed separately for the left and right sides and then aggregated across valid gait cycles.
 
 ---
 
 # 9. Double-Support Estimation
 
-Double-support time is estimated from the overlap between the stance intervals of the two limbs:
+Double-support time is estimated from the overlap between the stance intervals of the two limbs.
 
-$$
-T_{DS}
-=
-\min(T_{stance,L},T_{stance,R})
-$$
+The implementation approximates this using the shorter concurrent stance interval:
 
-Because double support depends on correctly detecting events on **both sides simultaneously**, it is intrinsically more sensitive to landmark and event-detection errors than cadence or cycle time.
+**Double-support time = min(left stance time, right stance time)**
 
-The repository therefore treats it as a lower-confidence monocular estimate.
+Because double-support estimation depends on correctly identifying events on both limbs, it is more sensitive to gait-event errors than metrics such as cadence or cycle time.
 
 ---
 
@@ -498,17 +392,16 @@ The repository therefore treats it as a lower-confidence monocular estimate.
 
 The pipeline converts image-space displacement into physical units using a spatial scale.
 
-For labeled evaluation sequences, the implementation can estimate the meters-per-pixel factor from the known stride length:
+For labeled evaluation sequences, the meters-per-pixel scale can be estimated from a known reference stride:
 
-$$
-s=
-\frac{L_{stride}^{GT}}
-     {L_{stride}^{px}}
-$$
+**meters-per-pixel scale = ground-truth stride length / pixel stride length**
 
-For sequences without an available reference label, the code falls back to an estimated walking speed and median hip velocity to obtain an approximate spatial scale.
+For sequences without a reference label, the implementation can estimate spatial scale using walking-speed information and the median hip velocity.
 
-This separation between **temporal gait features** and **spatial calibration** is important because timing metrics are less dependent on camera geometry than absolute distance measurements.
+This creates a useful distinction between:
+
+* **Temporal metrics**, which are largely derived directly from frame timing
+* **Spatial metrics**, which depend on camera geometry and calibration
 
 ---
 
@@ -532,32 +425,21 @@ Reference parameters include:
 * Swing time
 * Double-support time
 
-The evaluation module computes:
+The evaluation module compares estimated values against ground-truth measurements using:
 
-$$
-e_{abs}=|\hat{y}-y_{GT}|
-$$
+**Absolute error = |estimated − ground truth|**
 
-and
+**Percentage error = 100 × |estimated − ground truth| / |ground truth|**
 
-$$
-e_{\%}
-=
-100
-\frac{|\hat{y}-y_{GT}|}{|y_{GT}|}
-$$
-
-for each gait parameter.
-
-This creates a direct comparison between computer-vision-derived estimates and the available reference measurements.
+This provides a quantitative framework for evaluating the reliability of the computer-vision pipeline.
 
 ---
 
 # 12. Output
 
-The command-line pipeline exports a CSV containing frame-level gait-event indicators and summary metrics.
+The command-line pipeline exports a CSV containing both frame-level gait-event annotations and summary gait metrics.
 
-### Frame-level columns
+### Frame-Level Output
 
 ```text
 frame
@@ -567,7 +449,7 @@ TO_left
 TO_right
 ```
 
-### Gait-level columns
+### Gait-Level Output
 
 ```text
 speed
@@ -580,9 +462,9 @@ swing_time
 double_support_time
 ```
 
-The repository therefore produces both **event annotations** and **quantitative gait summaries** in a machine-readable format.
+This output structure makes the pipeline suitable for downstream statistical analysis, visualization, and machine-learning workflows.
 
-Example:
+### Example
 
 ```csv
 frame,HS_left,HS_right,TO_left,TO_right,speed,cadence,cycle_time,stride_length,step_length,stance_time,swing_time,double_support_time
@@ -614,8 +496,6 @@ Gait-Analysis/
 └── generated_metrics.csv
 ```
 
-The current repository contains both a reusable Python pipeline and a Jupyter-based experimental implementation.
-
 ---
 
 # 14. Installation
@@ -627,19 +507,19 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-Install the required dependencies:
+Install the required packages:
 
 ```bash
 pip install opencv-python mediapipe numpy scipy pandas matplotlib
 ```
 
-The notebook implementation specifically uses **MediaPipe 0.10.21**, together with OpenCV, NumPy, SciPy, Pandas, and Matplotlib.
+The notebook implementation uses **MediaPipe 0.10.21** together with OpenCV, NumPy, SciPy, Pandas, and Matplotlib.
 
 ---
 
 # 15. Running the Pipeline
 
-### Single video
+### Single Video
 
 ```bash
 python gait_pipeline.py \
@@ -648,7 +528,7 @@ python gait_pipeline.py \
     --out brandon_01_metrics.csv
 ```
 
-### Second recording
+### Second Recording
 
 ```bash
 python gait_pipeline.py \
@@ -657,7 +537,7 @@ python gait_pipeline.py \
     --out brandon_02_metrics.csv
 ```
 
-### Multiple videos
+### Multiple Videos
 
 ```bash
 python Gait_Analysis.py \
@@ -666,7 +546,7 @@ python Gait_Analysis.py \
     --out-dir results/
 ```
 
-The command-line runner automatically generates one metrics CSV per input recording and can optionally perform ground-truth comparisons.
+The command-line runner generates a metrics CSV for each input recording and can optionally perform ground-truth comparisons.
 
 ---
 
@@ -691,68 +571,74 @@ The command-line runner automatically generates one metrics CSV per input record
 
 ### Monocular Landmark-to-Gait Pipeline
 
-Built an end-to-end computer-vision workflow that converts ordinary walking videos into structured gait events and quantitative spatiotemporal measurements.
+Built an end-to-end computer-vision workflow that transforms conventional walking videos into structured gait events and quantitative spatiotemporal measurements.
 
 ### Perspective-Aware Coordinate Processing
 
-Implemented checkerboard-based planar calibration and homography mapping to transform image-space landmark observations toward physically meaningful coordinates.
+Implemented checkerboard-based planar calibration and homography mapping to transform image-space observations toward physically meaningful reference-plane coordinates.
 
 ### Noise-Robust Event Detection
 
-Replaced naive raw-coordinate event detection with smoothed **heel-to-hip and toe-to-hip relative signals**, combined with prominence and minimum-distance constraints.
+Developed gait-event detection using smoothed **heel-to-hip and toe-to-hip relative trajectories**, combined with peak prominence and temporal separation constraints.
 
 ### Direction-Invariant Processing
 
-Automatically determines walking direction from hip velocity, allowing the same event-detection logic to process both left-to-right and right-to-left recordings.
+Automatically determines walking direction from hip motion and normalizes right-to-left and left-to-right recordings into a common coordinate convention.
 
 ### Stride-Consistent Temporal Reasoning
 
-Introduced temporal and spatial consistency checks so that isolated landmark fluctuations do not create implausible gait cycles.
+Applied temporal and spatial consistency constraints to reduce false gait events caused by landmark-estimation noise.
 
 ### Quantitative Evaluation
 
-Implemented automated comparison of estimated gait parameters against reference measurements using absolute and percentage error.
+Implemented automated comparison between estimated gait parameters and available reference measurements using absolute and percentage error.
 
 ---
 
 # 18. Research Relevance
 
-The project provides a foundation for **low-cost, scalable biomechanical assessment** from monocular video.
+The project provides a foundation for **low-cost and scalable biomechanical assessment from monocular video**.
 
-A camera-based system of this type could support future research into:
+Potential future applications include:
 
 * Automated mobility assessment
 * Rehabilitation progress monitoring
 * Longitudinal gait tracking
 * Abnormal gait characterization
 * Remote biomechanical assessment
-* Computer-assisted clinical workflows
+* Computer-assisted gait analysis
 
-The current implementation should be viewed as a **research prototype rather than a clinically validated diagnostic system**.
+The current system is a **research prototype** and is not presented as a clinically validated diagnostic system.
 
 ---
 
 # 19. Limitations
 
-Monocular gait analysis introduces several fundamental constraints:
+Monocular gait analysis introduces several important limitations.
 
-**2D projection:**
-A single RGB camera does not directly measure full 3D biomechanics.
+### 2D Projection
 
-**Camera geometry:**
-Absolute spatial measurements depend on calibration and camera placement.
+A single RGB camera does not directly measure full 3D human motion.
 
-**Pose-estimation uncertainty:**
-Landmark errors directly propagate into event timing and derived metrics.
+### Camera Geometry
 
-**Occlusion:**
-Foot and lower-limb landmarks may become unreliable during partial occlusion.
+Absolute spatial measurements depend on calibration, camera placement, and the validity of the reference plane.
 
-**Event sensitivity:**
-Stance, swing, and double-support estimates depend on accurate HS/TO detection.
+### Pose Estimation Uncertainty
 
-**Clinical validity:**
-Clinical deployment requires rigorous validation against established motion-capture and biomechanical measurement systems.
+Errors in detected landmarks propagate directly into gait-event timing and derived measurements.
+
+### Occlusion
+
+Lower-limb landmarks may become unreliable when the feet or legs are partially occluded.
+
+### Event Sensitivity
+
+Metrics such as stance, swing, and double-support time are highly dependent on accurate heel-strike and toe-off detection.
+
+### Clinical Validation
+
+Clinical deployment would require rigorous validation against established biomechanical measurement systems.
 
 ---
 
@@ -762,17 +648,17 @@ Clinical deployment requires rigorous validation against established motion-capt
 Current System
       │
       ├── Monocular pose estimation
-      ├── Homography / spatial calibration
+      ├── Geometric calibration
       ├── Temporal filtering
       ├── HS / TO detection
-      └── Spatiotemporal metrics
+      └── Spatiotemporal gait metrics
                │
                ▼
         Future Extensions
                │
       ├── Automatic gait-cycle segmentation
       ├── Joint-angle estimation
-      ├── Left/right symmetry metrics
+      ├── Left/right symmetry analysis
       ├── 3D pose reconstruction
       ├── Temporal deep-learning models
       ├── Abnormal-gait classification
@@ -782,34 +668,10 @@ Current System
 
 ---
 
-# Research Context
-
-**Research Intern / Self-Directed Project**
-**February 2025 – April 2025**
-
-**Supervisor:** Professor Moataz Eltoukhy
-**University of Miami**
-
-The work investigates the intersection of:
-
-$$
-\text{Computer Vision}
-+
-\text{Signal Processing}
-+
-\text{Biomechanics}
-$$
-
-with the goal of developing more accessible quantitative gait-analysis methodologies.
-
----
 
 # Citation
 
-If this repository is used for research or educational work, please cite the repository and acknowledge the research supervision provided by the University of Miami.
+If this repository is used for research or educational purposes, please cite the repository and acknowledge the research supervision provided by the University of Miami.
 
----
-
-# Disclaimer
-
-This repository is intended for research and educational use. The implementation is not a clinically validated medical device and should not be used for diagnosis or treatment decisions without appropriate clinical validation.
+```
+```
